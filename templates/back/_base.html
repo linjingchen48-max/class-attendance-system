@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title or '后台管理' }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/reset.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/style.css') }}">
+  <style>
+    .container { max-width: 1100px; margin: 26px auto; padding: 0 16px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; }
+    .topbar a { margin-left: 10px; }
+    .btn { display:inline-block; padding: 8px 12px; background:#2c8f2c; color:#fff; border-radius:4px; text-decoration:none; }
+    .btn.gray { background:#5a5a5a; }
+    .btn.red { background:#c0392b; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #eee; }
+    .muted { color:#888; }
+    .form-row { margin: 10px 0; }
+    input, select, textarea { width: 100%; padding: 8px; }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <strong>{{ title or '后台管理' }}</strong>
+        <span class="muted" style="margin-left:10px;">当前用户：{{ session.get('teacher_name','-') }}</span>
+      </div>
+      <div>
+        <a class="btn gray" href="/front/" target="_blank">打开前台大屏</a>
+<a class="btn red" href="/back/logout">退出</a>
+      </div>
+    </div>
+    {% block content %}{% endblock %}
+  </div>
+  <script>
+    async function postJSON(url, data){
+      const res = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      });
+      return await res.json();
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

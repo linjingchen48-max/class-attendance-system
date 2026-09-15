@@ -1,0 +1,68 @@
+{% extends 'back/_base.html' %}
+{% set title = '编辑考勤记录' %}
+{% block content %}
+  <form id="form" style="margin-top:12px;">
+    <div class="grid2">
+      <div class="form-row">
+        <label>学号</label>
+        <input name="student_no" required value="{{ record.student_no }}">
+      </div>
+      <div class="form-row">
+        <label>姓名</label>
+        <input name="student_name" required value="{{ record.student_name }}">
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="form-row">
+        <label>日期</label>
+        <input type="date" name="date" required value="{{ record.date }}">
+      </div>
+      <div class="form-row">
+        <label>状态</label>
+        <select name="status">
+          {% for s in ['正常','迟到','请假','旷课'] %}
+            <option value="{{ s }}" {% if record.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="form-row">
+        <label>时间（可选）</label>
+        <input name="time" value="{{ record.time or '' }}">
+      </div>
+      <div class="form-row">
+        <label>备注（可选）</label>
+        <input name="remark" value="{{ record.remark or '' }}">
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <button class="btn" type="submit">保存修改</button>
+      <a class="btn gray" href="/back/attendance/list">返回列表</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.querySelector('#form');
+  const id = parseInt(location.pathname.split('/').pop(), 10);
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+    const res = await fetch('/back/attendance/api/update/' + id, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    alert(json.msg || '完成');
+    if(json.code === 200) location.href = '/back/attendance/list';
+  });
+</script>
+{% endblock %}

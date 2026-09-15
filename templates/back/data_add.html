@@ -1,0 +1,67 @@
+{% extends 'back/_base.html' %}
+{% set title = '新增考勤记录' %}
+{% block content %}
+  <form id="form">
+    <div class="grid2">
+      <div class="form-row">
+        <label>学号</label>
+        <input name="student_no" required>
+      </div>
+      <div class="form-row">
+        <label>姓名</label>
+        <input name="student_name" required>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="form-row">
+        <label>日期</label>
+        <input type="date" name="date" required>
+      </div>
+      <div class="form-row">
+        <label>状态</label>
+        <select name="status">
+          <option value="正常">正常</option>
+          <option value="迟到">迟到</option>
+          <option value="请假">请假</option>
+          <option value="旷课">旷课</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="form-row">
+        <label>时间（可选）</label>
+        <input name="time" placeholder="08:05 / 全天">
+      </div>
+      <div class="form-row">
+        <label>备注（可选）</label>
+        <input name="remark" placeholder="堵车 / 病假 / 未说明">
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <button class="btn" type="submit">保存</button>
+      <a class="btn gray" href="/back/attendance/list">返回列表</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.querySelector('#form');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+    const res = await fetch('/back/attendance/api/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    alert(json.msg || '完成');
+    if(json.code === 200) location.href = '/back/attendance/list';
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+html, body { height: 100%; margin: 0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif; background:#050b1a; }
+.screen { min-height:100vh; color:#d7f3ff; background:
+ radial-gradient(1200px 600px at 50% 0%, rgba(64,142,255,.25), rgba(0,0,0,0) 60%),
+ radial-gradient(900px 500px at 20% 80%, rgba(99,255,214,.12), rgba(0,0,0,0) 60%),
+ linear-gradient(180deg, #07132f, #040818 65%, #020412);
+ padding: 18px 22px 20px;
+ box-sizing:border-box;
+}
+.header { display:flex; align-items:center; justify-content:space-between; padding: 6px 4px 14px; }
+.title { font-size: 44px; letter-spacing:2px; font-weight: 800; text-shadow: 0 0 18px rgba(90,180,255,.35); }
+.timebox { text-align:right; line-height:1.4; font-size: 16px; color: rgba(215,243,255,.85); }
+.timebox .now { font-size: 18px; color:#e9fbff; }
+
+.cards { display:grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 10px; }
+.card { position:relative; padding: 16px 16px 14px; border-radius: 10px; background: rgba(9, 26, 70, .55);
+ border: 1px solid rgba(76, 196, 255, .25); box-shadow: inset 0 0 18px rgba(76,196,255,.08);
+ backdrop-filter: blur(6px);
+}
+.card .label { display:flex; align-items:center; gap:10px; font-size: 18px; color: rgba(231,251,255,.92); }
+.badge { width: 34px; height: 34px; border-radius: 50%;
+ background: radial-gradient(circle at 30% 30%, rgba(120,240,255,.8), rgba(22,80,180,.2));
+ border: 1px solid rgba(120,240,255,.35);
+ box-shadow: 0 0 16px rgba(84,200,255,.2);
+ display:flex; align-items:center; justify-content:center;
+}
+.badge i { width: 16px; height: 16px; display:block; border-radius: 3px; background: rgba(215,243,255,.85); opacity:.9; }
+.card .value { margin-top: 12px; font-size: 54px; font-weight: 800; letter-spacing:1px;
+ color:#88eaff; text-shadow: 0 0 16px rgba(88,234,255,.25);
+}
+.card .unit { font-size: 18px; font-weight: 600; opacity: .9; margin-left: 4px; }
+.card .sub { position:absolute; right: 14px; bottom: 12px; font-size: 13px; opacity:.75; }
+
+.panels { display:grid; grid-template-columns: 1.05fr 1.2fr 1fr; gap: 14px; margin-top: 14px; }
+.panel { border-radius: 10px; background: rgba(9, 26, 70, .45);
+ border: 1px solid rgba(76, 196, 255, .22); box-shadow: inset 0 0 18px rgba(76,196,255,.06);
+ padding: 12px 12px 10px;
+}
+.panel h3 { margin: 4px 4px 10px; font-size: 18px; letter-spacing:1px; color: rgba(231,251,255,.92); }
+.chart { height: 360px; }
+.tablewrap { padding: 0 6px 6px; }
+.table { width:100%; border-collapse: collapse; font-size: 14px; }
+.table th, .table td { padding: 10px 10px; border-bottom: 1px solid rgba(120,240,255,.12); }
+.table th { color: rgba(180,240,255,.9); font-weight:700; }
+.row-tag { display:inline-block; padding: 4px 10px; border-radius: 999px; font-weight:700; }
+.tag-late { background: rgba(255, 186, 56, .16); color: rgba(255, 210, 120, 1); border: 1px solid rgba(255, 186, 56, .22); }
+.tag-leave { background: rgba(70, 180, 255, .16); color: rgba(160, 225, 255, 1); border: 1px solid rgba(70, 180, 255, .22); }
+.tag-absent { background: rgba(255, 90, 120, .16); color: rgba(255, 170, 190, 1); border: 1px solid rgba(255, 90, 120, .22); }
+.footerhint { margin: 10px 2px 0; font-size: 12px; opacity:.7; }
+
+@media (max-width: 1400px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+  .panels { grid-template-columns: 1fr; }
+  .chart { height: 320px; }
+}

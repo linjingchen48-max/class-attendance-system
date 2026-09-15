@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>班级考勤可视化大屏</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='front/css/index.css') }}">
+</head>
+<body>
+  <div class="screen">
+    <div class="header">
+      <div class="title">XX班级考勤可视化大屏</div>
+      <div class="timebox">
+        <div class="now" id="nowTime">--</div>
+        <div>数据最后更新时间：<span id="lastUpdate">--</span></div>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label"><span class="badge"><i></i></span>今日应到人数</div>
+        <div class="value"><span id="cTotal">--</span><span class="unit">人</span></div>
+        <div class="sub">统计口径：今日</div>
+      </div>
+      <div class="card">
+        <div class="label"><span class="badge"><i></i></span>实到人数</div>
+        <div class="value"><span id="cPresent">--</span><span class="unit">人</span></div>
+        <div class="sub">含正常到课</div>
+      </div>
+      <div class="card">
+        <div class="label"><span class="badge"><i></i></span>出勤率</div>
+        <div class="value"><span id="cRate">--</span></div>
+        <div class="sub">实到/应到</div>
+      </div>
+      <div class="card">
+        <div class="label"><span class="badge"><i></i></span>迟到人数</div>
+        <div class="value"><span id="cLate">--</span><span class="unit">人</span></div>
+        <div class="sub">08:00后到</div>
+      </div>
+      <div class="card">
+        <div class="label"><span class="badge"><i></i></span>请假人数</div>
+        <div class="value"><span id="cLeave">--</span><span class="unit">人</span></div>
+        <div class="sub">含病假/事假</div>
+      </div>
+      <div class="card">
+        <div class="label"><span class="badge"><i></i></span>旷课人数</div>
+        <div class="value"><span id="cAbsent">--</span><span class="unit">人</span></div>
+        <div class="sub">未到未请假</div>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <h3>班级考勤构成</h3>
+        <div id="pieChart" class="chart"></div>
+</div>
+
+      <div class="panel">
+        <h3>近7天班级出勤率趋势</h3>
+        <div id="lineChart" class="chart"></div>
+</div>
+
+      <div class="panel">
+        <h3>异常考勤学生列表</h3>
+        <div class="tablewrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:24%;">姓名</th>
+                <th style="width:22%;">考勤类型</th>
+                <th style="width:22%;">时间</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="abnormalBody"></tbody>
+          </table>
+        </div>
+</div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='front/js/echarts.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='front/js/index.js') }}"></script>
+</body>
+</html>

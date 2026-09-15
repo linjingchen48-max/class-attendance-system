@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>班主任登录</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/reset.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/style.css') }}">
+  <style>
+    .box { width: 380px; margin: 90px auto; padding: 26px; background:#fff; border-radius: 6px; box-shadow: 0 10px 35px rgba(0,0,0,.12); }
+    h1 { font-size: 20px; margin: 0 0 14px; }
+    input{ width:100%; padding: 10px; margin: 8px 0; }
+    button{ width:100%; padding: 10px; background:#2c8f2c; color:#fff; border:0; border-radius:4px; cursor:pointer; }
+    .msg{ margin-top: 10px; color:#c0392b; min-height: 18px; }
+    .hint{ font-size:12px; color:#666; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>班主任后台登录</h1>
+    <input id="username" placeholder="账号" autocomplete="username" />
+    <input id="password" placeholder="密码" type="password" autocomplete="current-password" />
+    <button id="btnLogin">登录</button>
+    <div class="msg" id="msg"></div>
+</div>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    $('#btnLogin').addEventListener('click', async ()=>{
+      $('#msg').textContent = '';
+      const username = $('#username').value.trim();
+      const password = $('#password').value;
+      if(!username || !password){
+        $('#msg').textContent = '请输入账号和密码';
+        return;
+      }
+      const res = await fetch('/back/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const json = await res.json();
+      if(json.code === 200){
+        location.href = json.redirect || '/back/attendance/list';
+      }else{
+        $('#msg').textContent = json.msg || '登录失败';
+      }
+    });
+  </script>
+</body>
+</html>

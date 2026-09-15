@@ -1,0 +1,72 @@
+{% extends 'back/_base.html' %}
+{% set title = '考勤记录列表' %}
+{% block content %}
+  <div style="display:flex; justify-content:space-between; align-items:center; margin: 10px 0 14px;">
+    <div class="muted">可对考勤记录进行新增、编辑与删除。</div>
+    <a class="btn" href="/back/attendance/add">新增考勤</a>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:70px;">ID</th>
+        <th style="width:120px;">学号</th>
+        <th style="width:120px;">姓名</th>
+        <th style="width:140px;">日期</th>
+        <th style="width:120px;">状态</th>
+        <th>备注</th>
+        <th style="width:180px;">操作</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="7" class="muted">加载中…</td></tr>
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const tbody = document.querySelector('#tbody');
+
+  function rowHtml(r){
+    return `
+      <tr>
+        <td>${r.id ?? ''}</td>
+        <td>${r.student_no ?? ''}</td>
+        <td>${r.student_name ?? ''}</td>
+        <td>${r.date ?? ''}</td>
+        <td>${r.status ?? ''}</td>
+        <td>${r.remark ?? ''}</td>
+        <td>
+          <a class="btn gray" href="/back/attendance/edit/${r.id}">编辑</a>
+          <a class="btn red" href="javascript:void(0)" onclick="del(${r.id})">删除</a>
+        </td>
+      </tr>`;
+  }
+
+  async function load(){
+    const res = await fetch('/back/attendance/api/list', { cache:'no-store' });
+    const json = await res.json();
+    if(json.code !== 200){
+      tbody.innerHTML = `<tr><td colspan="7" class="muted">加载失败：${json.msg || '未知错误'}</td></tr>`;
+      return;
+    }
+    const list = json.data || [];
+    if(list.length === 0){
+      tbody.innerHTML = `<tr><td colspan="7" class="muted">暂无数据</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(rowHtml).join('');
+  }
+
+  async function del(id){
+    if(!confirm('确定删除这条记录？')) return;
+    const res = await fetch('/back/attendance/api/delete/' + id, { method:'POST' });
+    const json = await res.json();
+    alert(json.msg || '完成');
+    load();
+  }
+
+  load();
+</script>
+{% endblock %}
