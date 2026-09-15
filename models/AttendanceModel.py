@@ -5,7 +5,7 @@ from .database import fetch_all, fetch_one, execute
 class AttendanceModel:
     @staticmethod
     def list_all(limit: int = 500):
-        sql = """SELECT id, student_no, student_name, DATE_FORMAT(`date`, '%Y-%m-%d') AS `date`,
+        sql = """SELECT id, student_no, student_name, DATE_FORMAT(`date`, '%%Y-%%m-%%d') AS `date`,
                         status, time, remark
                  FROM attendance_record
                  ORDER BY `date` DESC, id DESC
@@ -14,7 +14,7 @@ class AttendanceModel:
 
     @staticmethod
     def get_by_id(record_id: int):
-        sql = """SELECT id, student_no, student_name, DATE_FORMAT(`date`, '%Y-%m-%d') AS `date`,
+        sql = """SELECT id, student_no, student_name, DATE_FORMAT(`date`, '%%Y-%%m-%%d') AS `date`,
                         status, time, remark
                  FROM attendance_record
                  WHERE id=%s LIMIT 1"""

@@ -6,7 +6,7 @@ USE dgcsxy;
 CREATE TABLE IF NOT EXISTS teacher (
   id INT PRIMARY KEY AUTO_INCREMENT,
   username VARCHAR(50) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL COMMENT 'PBKDF2 摘要，非明文',
   name VARCHAR(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS attendance_record (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Demo data
-INSERT IGNORE INTO teacher(username, password, name) VALUES ('admin','admin123','班主任');
+-- 演示账号 admin / admin123（此处存的是 PBKDF2 摘要，不是明文口令）
+INSERT IGNORE INTO teacher(username, password, name) VALUES
+  ('admin','pbkdf2:sha256:600000$sUmOlDAszVFkctRf$6db31d31d560e2b5495339d1f3aa01f11b80c8e16d7d012e7eb523483bea8c4a','班主任');
 
 INSERT IGNORE INTO student(student_no, student_name, class_name) VALUES
 ('20250001','李雷','一(1)班'),

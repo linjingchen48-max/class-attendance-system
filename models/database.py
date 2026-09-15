@@ -31,9 +31,12 @@ def get_conn():
 
 
 def fetch_all(sql: str, params=None):
+    # params 原样传递：PyMySQL 仅在 args is not None 时才做 % 格式化。
+    # 若写成 `params or ()`，None 会变成空元组而仍然触发格式化，
+    # 导致 SQL 中的 % 字面量（DATE_FORMAT、LIKE 等）报错。
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(sql, params or ())
+            cur.execute(sql, params)
             return cur.fetchall()
 
 
@@ -45,7 +48,7 @@ def fetch_one(sql: str, params=None):
 def execute(sql: str, params=None) -> int:
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(sql, params or ())
+            cur.execute(sql, params)
             return cur.lastrowid
 
 
