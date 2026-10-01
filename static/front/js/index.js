@@ -39,11 +39,14 @@
     const absent = ta.absent ?? 0;
     const late = ta.late ?? 0;
     const leave = ta.leave ?? 0;
-    const rate = calcRate(present, total);
+    // 实到 = 正常 + 迟到；出勤率直接用后端算好的 today_rate，
+    // 保证卡片和趋势图今天那个点是同一个数。
+    const attended = ta.attended ?? (present + late);
+    const rate = data.today_rate ?? calcRate(attended, total);
 
     $('#cTotal').textContent = total;
-    $('#cPresent').textContent = present;
-    $('#cRate').textContent = rate + '%';
+    $('#cPresent').textContent = attended;
+    $('#cRate').textContent = Math.round(rate) + '%';
     $('#cLate').textContent = late;
     $('#cLeave').textContent = leave;
     $('#cAbsent').textContent = absent;
@@ -120,7 +123,13 @@
 
     chart.setOption({
       grid: { left: 44, right: 18, top: 30, bottom: 30 },
-      tooltip: { trigger: 'axis' },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (ps) => {
+          const p = ps[0];
+          return `${p.axisValue}<br/>出勤率：${p.value == null ? '无记录' : p.value + '%'}`;
+        }
+      },
       xAxis: {
         type: 'category',
         data: x,
@@ -129,8 +138,9 @@
       },
       yAxis: {
         type: 'value',
-        min: 80,
+        min: 0,
         max: 100,
+        interval: 20,
         axisLine: { show: false },
         splitLine: { lineStyle: { color: 'rgba(120,240,255,.10)' } },
         axisLabel: { color: 'rgba(215,243,255,.75)', formatter: '{value}%' }
@@ -138,7 +148,8 @@
       series: [{
         name: '出勤率',
         type: 'line',
-        smooth: true,
+        smooth: false,          // 折线如实反映每天的值，不做平滑夸张
+        connectNulls: false,    // 无记录的日子断开，不连成假趋势
         symbol: 'circle',
         symbolSize: 8,
         areaStyle: { opacity: 0.18 },

@@ -15,7 +15,8 @@ class HomeController:
         except Exception as e:
             return jsonify({'code': 500, 'msg': f'获取统计失败：{e}', 'data': {
                 'total_students': 0,
-                'today_attendance': {'present': 0, 'absent': 0, 'late': 0, 'leave': 0},
-                'weekly_rate': [0,0,0,0,0,0,0],
+                'today_attendance': {'present': 0, 'absent': 0, 'late': 0, 'leave': 0, 'attended': 0},
+                'today_rate': 0,
+                'weekly_rate': [None] * 7,
                 'abnormal_list': []
             }})

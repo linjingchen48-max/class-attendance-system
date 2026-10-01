@@ -71,18 +71,32 @@ class AttendanceModel:
             "absent": int(row.get("absent") or 0),
         }
 
+        # 出勤率口径（全站统一）：实到 / 应到
+        #   实到 = 正常 + 迟到（人到了课堂，迟到也算到）
+        #   应到 = 在册学生总数
+        # 请假、旷课都不计入实到。
+        def attendance_rate(attended: int) -> float:
+            return round((attended / total) * 100, 1) if total else 0.0
+
+        today_attendance["attended"] = today_attendance["present"] + today_attendance["late"]
+        today_rate = attendance_rate(today_attendance["attended"])
+
         # Weekly rate (last 7 days, including today)
+        # 当天没有任何考勤记录时返回 None（前端画成断点），而不是 0%，
+        # 避免把"没录数据"误显示成"全班缺勤"。
         weekly = []
         for i in range(6, -1, -1):
             d = today - timedelta(days=i)
             sql_day = """SELECT
-                SUM(CASE WHEN status IN ('正常','迟到','请假') THEN 1 ELSE 0 END) AS attended
+                COUNT(*) AS recorded,
+                SUM(CASE WHEN status IN ('正常','迟到') THEN 1 ELSE 0 END) AS attended
               FROM attendance_record
               WHERE `date`=%s"""
             r = fetch_one(sql_day, (d.isoformat(),)) or {}
-            attended = int(r.get("attended") or 0)
-            rate = round((attended / total) * 100, 1) if total else 0.0
-            weekly.append(rate)
+            if not int(r.get("recorded") or 0):
+                weekly.append(None)
+                continue
+            weekly.append(attendance_rate(int(r.get("attended") or 0)))
 
         # Abnormal list: today's records not normal
         sql_abn = """SELECT student_name AS name, status AS type,
@@ -97,6 +111,7 @@ class AttendanceModel:
         return {
             "total_students": total,
             "today_attendance": today_attendance,
+            "today_rate": today_rate,
             "weekly_rate": weekly,
             "abnormal_list": abnormal_list
         }
