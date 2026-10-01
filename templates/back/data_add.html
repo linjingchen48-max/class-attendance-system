@@ -1,50 +1,12 @@
 {% extends 'back/_base.html' %}
-{% set title = '新增考勤记录' %}
+{% set title = '新增考勤' %}
 {% block content %}
-  <form id="form">
-    <div class="grid2">
-      <div class="form-row">
-        <label>学号</label>
-        <input name="student_no" required maxlength="20" pattern="[A-Za-z0-9]+" title="字母或数字">
-      </div>
-      <div class="form-row">
-        <label>姓名</label>
-        <input name="student_name" required maxlength="50">
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div class="form-row">
-        <label>日期</label>
-        <input type="date" name="date" required>
-      </div>
-      <div class="form-row">
-        <label>状态</label>
-        <select name="status">
-          <option value="正常">正常</option>
-          <option value="迟到">迟到</option>
-          <option value="请假">请假</option>
-          <option value="旷课">旷课</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div class="form-row">
-        <label>时间（可选）</label>
-        <input name="time" maxlength="20" placeholder="08:05 / 全天">
-      </div>
-      <div class="form-row">
-        <label>备注（可选）</label>
-        <input name="remark" maxlength="200" placeholder="堵车 / 病假 / 未说明">
-      </div>
-    </div>
-
-    <div style="margin-top: 14px;">
-      <button class="btn" type="submit">保存</button>
-      <a class="btn gray" href="/back/attendance/list">返回列表</a>
-    </div>
-  </form>
+  <div class="page-head">
+    <h1>新增考勤</h1>
+    <div class="actions"><a class="btn gray" href="{{ url_for('web.roll_call') }}">全班一起点？用批量点名</a></div>
+  </div>
+  {% set record = None %}
+  {% include 'back/_record_form.html' %}
 {% endblock %}
 
 {% block scripts %}
@@ -52,16 +14,18 @@
   const form = document.querySelector('#form');
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const fd = new FormData(form);
-    const payload = Object.fromEntries(fd.entries());
-    const res = await fetch('/back/attendance/api/add', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const json = await res.json();
-    alert(json.msg || '完成');
-    if(json.code === 200) location.href = '/back/attendance/list';
+    if(!form.student_no.value){ toast('请选择学生', false); return; }
+    const btn = document.querySelector('#btnSave'); btn.disabled = true;
+    const json = await postJSON('/back/attendance/api/add', Object.fromEntries(new FormData(form).entries()));
+    btn.disabled = false;
+    if(json.code === 200){
+      toast(json.msg || '保存成功');
+      // 保留日期，清空其他项，方便连续录入下一位
+      const keepDate = form.date.value;
+      form.reset(); form.date.value = keepDate;
+      return;
+    }
+    toast(json.msg || '保存失败', false);
   });
 </script>
 {% endblock %}

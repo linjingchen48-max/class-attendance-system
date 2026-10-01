@@ -1,0 +1,116 @@
+{% extends 'back/_base.html' %}
+{% set title = '学生名册' %}
+{% block content %}
+  <div class="page-head">
+    <h1>学生名册</h1>
+    <div class="muted" id="count"></div>
+  </div>
+
+  <form class="card filters" id="addForm" novalidate>
+    <div class="f"><label>学号</label><input name="student_no" maxlength="20" placeholder="字母或数字"></div>
+    <div class="f"><label>姓名</label><input name="student_name" maxlength="50"></div>
+    <div class="f"><label>班级</label><input name="class_name" maxlength="50" placeholder="如 一(1)班"></div>
+    <button class="btn" type="submit">+ 添加学生</button>
+  </form>
+
+  <div class="card" style="padding:0;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:130px;">学号</th>
+          <th style="width:150px;">姓名</th>
+          <th style="width:150px;">班级</th>
+          <th style="width:110px;">考勤记录</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="5" class="empty">加载中…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="hint">修改学号时，该学生已有的考勤记录会自动跟着改；已有考勤记录的学生不能删除，避免历史数据丢失。</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const tbody = document.querySelector('#tbody');
+  let list = [];
+
+  function viewRow(s){
+    const id = Number(s.id);
+    const n = Number(s.record_count);
+    return `
+      <tr data-id="${id}">
+        <td>${esc(s.student_no)}</td>
+        <td><a href="/back/student/${encodeURIComponent(s.student_no)}">${esc(s.student_name)}</a></td>
+        <td>${esc(s.class_name)}</td>
+        <td>${n} 条</td>
+        <td>
+          <a class="btn gray small" href="/back/student/${encodeURIComponent(s.student_no)}">个人统计</a>
+          <button class="btn gray small" onclick="edit(${id})">编辑</button>
+          <button class="btn red small" onclick="del(${id})" ${n ? 'disabled title="已有考勤记录，不能删除"' : ''}>删除</button>
+        </td>
+      </tr>`;
+  }
+  function editRow(s){
+    const id = Number(s.id);
+    return `
+      <tr data-id="${id}">
+        <td><input class="e-no" maxlength="20" value="${esc(s.student_no)}"></td>
+        <td><input class="e-name" maxlength="50" value="${esc(s.student_name)}"></td>
+        <td><input class="e-class" maxlength="50" value="${esc(s.class_name)}"></td>
+        <td>${Number(s.record_count)} 条</td>
+        <td>
+          <button class="btn small" onclick="save(${id})">保存</button>
+          <button class="btn gray small" onclick="render()">取消</button>
+        </td>
+      </tr>`;
+  }
+  function render(){
+    tbody.innerHTML = list.length ? list.map(viewRow).join('')
+      : `<tr><td colspan="5" class="empty">名册里还没有学生</td></tr>`;
+    document.querySelector('#count').textContent = `共 ${list.length} 人`;
+  }
+  async function load(){
+    const res = await fetch('/back/student/api/list', { cache:'no-store' });
+    const json = await res.json();
+    if(json.code === 401){ location.href = '/back/login'; return; }
+    if(json.code !== 200){ tbody.innerHTML = `<tr><td colspan="5" class="empty">加载失败：${esc(json.msg)}</td></tr>`; return; }
+    list = json.data || [];
+    render();
+  }
+  function edit(id){
+    render();
+    const s = list.find(x => Number(x.id) === id);
+    tbody.querySelector(`tr[data-id="${id}"]`).outerHTML = editRow(s);
+  }
+  async function save(id){
+    const tr = tbody.querySelector(`tr[data-id="${id}"]`);
+    const json = await postJSON('/back/student/api/update/' + id, {
+      student_no: tr.querySelector('.e-no').value,
+      student_name: tr.querySelector('.e-name').value,
+      class_name: tr.querySelector('.e-class').value,
+    });
+    toast(json.msg || '完成', json.code === 200);
+    if(json.code === 200) load();
+  }
+  async function del(id){
+    const s = list.find(x => Number(x.id) === id);
+    if(!confirm(`确定从名册删除 ${s ? s.student_name : ''}？`)) return;
+    const json = await postJSON('/back/student/api/delete/' + id);
+    toast(json.msg || '完成', json.code === 200);
+    load();
+  }
+  document.querySelector('#addForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const json = await postJSON('/back/student/api/add', Object.fromEntries(new FormData(form).entries()));
+    toast(json.msg || '完成', json.code === 200);
+    if(json.code === 200){
+      const cls = form.class_name.value;
+      form.reset(); form.class_name.value = cls; form.student_no.focus();
+      load();
+    }
+  });
+  load();
+</script>
+{% endblock %}

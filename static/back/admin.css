@@ -1,0 +1,122 @@
+/* 后台通用样式（替代原 Simpla 模板：原模板左侧那条深色背景其实只是 body 背景图，里面没有菜单） */
+:root {
+  --primary: #2c8f2c;
+  --primary-dark: #237323;
+  --danger: #c0392b;
+  --gray: #5a5a5a;
+  --text: #2b2f33;
+  --muted: #8a9096;
+  --line: #e8eaed;
+  --bg: #f3f4f6;
+  --side: #1f2a37;
+  --side-text: #c4ccd6;
+  --ok: #2c8f2c;
+  --late: #d48806;
+  --leave: #1677c9;
+  --absent: #c0392b;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  color: var(--text); background: var(--bg);
+}
+a { color: var(--leave); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- 布局 ---------- */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 210px; flex: none; background: var(--side); color: var(--side-text);
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+}
+.brand { padding: 22px 20px 18px; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255,255,255,.08); }
+.brand small { display: block; font-size: 12px; font-weight: 400; color: var(--side-text); opacity: .7; letter-spacing: 0; margin-top: 2px; }
+.nav { list-style: none; margin: 10px 0; padding: 0; flex: 1; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: var(--side-text);
+  border-left: 3px solid transparent; }
+.nav a:hover { background: rgba(255,255,255,.05); color: #fff; text-decoration: none; }
+.nav a.active { background: rgba(44,143,44,.18); border-left-color: var(--primary); color: #fff; }
+.nav svg { width: 18px; height: 18px; flex: none; }
+.side-foot { padding: 14px 20px 18px; border-top: 1px solid rgba(255,255,255,.08); font-size: 13px; }
+.side-foot a { color: var(--side-text); }
+
+.main { flex: 1; min-width: 0; padding: 22px 28px 40px; }
+.page-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.page-head h1 { font-size: 20px; margin: 0; }
+.page-head .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px; margin-bottom: 16px; }
+
+/* ---------- 按钮 ---------- */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 5px; border: 1px solid transparent;
+  background: var(--primary); color: #fff; font-size: 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn:hover { background: var(--primary-dark); text-decoration: none; }
+.btn.gray { background: #fff; color: var(--text); border-color: #cfd4da; }
+.btn.gray:hover { background: #f5f6f7; }
+.btn.red { background: var(--danger); }
+.btn.red:hover { background: #a93226; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---------- 表格 ---------- */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { color: var(--muted); font-weight: 600; font-size: 13px; background: #fafbfc; }
+tbody tr:hover { background: #fafcff; }
+td.wrap { word-break: break-all; max-width: 280px; }
+.muted { color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 30px 0; }
+
+.tag { display: inline-block; white-space: nowrap; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; }
+.tag-正常 { color: var(--ok); border-color: rgba(44,143,44,.35); background: rgba(44,143,44,.08); }
+.tag-迟到 { color: var(--late); border-color: rgba(212,136,6,.35); background: rgba(212,136,6,.08); }
+.tag-请假 { color: var(--leave); border-color: rgba(22,119,201,.35); background: rgba(22,119,201,.08); }
+.tag-旷课 { color: var(--absent); border-color: rgba(192,57,43,.35); background: rgba(192,57,43,.08); }
+.tag-未登记 { color: var(--muted); border-color: #d5d9de; background: #f5f6f7; }
+
+/* ---------- 表单 ---------- */
+label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: 600; }
+input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #cfd4da; border-radius: 5px; font: inherit; background: #fff; }
+input, select { height: 38px; }
+.filters .btn { height: 38px; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(44,143,44,.15); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.form-row { margin-bottom: 4px; }
+.form-actions { margin-top: 18px; display: flex; gap: 8px; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.filters { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.filters .f { width: 150px; }
+.filters .f.wide { width: 200px; }
+
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
+.pager .pages { display: flex; gap: 6px; align-items: center; }
+
+/* ---------- 提示条 ---------- */
+.toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 99;
+  padding: 10px 18px; border-radius: 6px; color: #fff; background: var(--primary); box-shadow: 0 6px 24px rgba(0,0,0,.15);
+  max-width: 80vw; font-size: 14px; display: none; }
+.toast.err { background: var(--danger); }
+
+/* ---------- 统计小卡片 ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.stat .k { font-size: 13px; color: var(--muted); }
+.stat .v { font-size: 26px; font-weight: 700; margin-top: 2px; }
+
+@media (max-width: 860px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; }
+  .nav { display: flex; flex-wrap: wrap; margin: 0; }
+  .nav a { border-left: 0; border-bottom: 3px solid transparent; padding: 10px 14px; }
+  .nav a.active { border-bottom-color: var(--primary); }
+  .side-foot { display: none; }
+  .main { padding: 16px; }
+  .grid2 { grid-template-columns: 1fr; }
+  /* 手机上表格不挤压，改为左右滑动 */
+  .card { overflow-x: auto; }
+  .card table { min-width: 680px; }
+  td, th { white-space: nowrap; }
+  td.wrap { white-space: normal; min-width: 140px; }
+}

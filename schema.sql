@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS teacher (
   name VARCHAR(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Student table (可选，用于统计总人数)
+-- Student table 学生名册：应到人数、考勤录入选人都以它为准
 CREATE TABLE IF NOT EXISTS student (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_no VARCHAR(20) NOT NULL UNIQUE,
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS student (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Attendance record table
+-- student_name 是录入当时从名册带出的快照；页面显示一律以名册里的姓名为准（JOIN student）
 CREATE TABLE IF NOT EXISTS attendance_record (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_no VARCHAR(20) NOT NULL,
@@ -32,7 +33,10 @@ CREATE TABLE IF NOT EXISTS attendance_record (
   -- 同一学生同一天只能有一条考勤记录，防止重复录入导致出勤率超过 100%
   UNIQUE KEY uk_student_date (student_no, `date`),
   INDEX idx_date (`date`),
-  INDEX idx_status (status)
+  INDEX idx_status (status),
+  -- 只能给名册里的学生录考勤；名册改学号时考勤跟着改，有考勤的学生不能直接删
+  CONSTRAINT fk_attendance_student FOREIGN KEY (student_no)
+    REFERENCES student(student_no) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Demo data
@@ -45,9 +49,10 @@ INSERT IGNORE INTO student(student_no, student_name, class_name) VALUES
 ('20250002','韩梅梅','一(1)班'),
 ('20250003','张伟','一(1)班'),
 ('20250004','王芳','一(1)班'),
-('20250005','赵敏','一(1)班');
+('20250005','赵敏','一(1)班'),
+('20250006','刘洋','一(1)班');
 
--- Last 7 days demo attendance (partial)
+-- 近 7 天演示考勤（刘洋今天故意没登记，用来演示"未登记"统计）
 INSERT IGNORE INTO attendance_record(student_no, student_name, `date`, status, time, remark) VALUES
 ('20250001','李雷', CURDATE(), '迟到', '08:05', '堵车'),
 ('20250002','韩梅梅', CURDATE(), '请假', '全天', '病假'),
@@ -59,8 +64,34 @@ INSERT IGNORE INTO attendance_record(student_no, student_name, `date`, status, t
 ('20250003','张伟', DATE_SUB(CURDATE(), INTERVAL 1 DAY), '迟到', '08:02', ''),
 ('20250004','王芳', DATE_SUB(CURDATE(), INTERVAL 1 DAY), '正常', '07:56', ''),
 ('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 1 DAY), '请假', '全天', '事假'),
+('20250006','刘洋', DATE_SUB(CURDATE(), INTERVAL 1 DAY), '正常', '07:49', ''),
 ('20250001','李雷', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '正常', '07:54', ''),
 ('20250002','韩梅梅', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '正常', '07:57', ''),
 ('20250003','张伟', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '正常', '07:55', ''),
 ('20250004','王芳', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '旷课', '--', ''),
-('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '正常', '07:52', '');
+('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '正常', '07:52', ''),
+('20250006','刘洋', DATE_SUB(CURDATE(), INTERVAL 2 DAY), '正常', '07:51', ''),
+('20250001','李雷', DATE_SUB(CURDATE(), INTERVAL 3 DAY), '正常', '07:53', ''),
+('20250002','韩梅梅', DATE_SUB(CURDATE(), INTERVAL 3 DAY), '正常', '07:56', ''),
+('20250003','张伟', DATE_SUB(CURDATE(), INTERVAL 3 DAY), '正常', '07:50', ''),
+('20250004','王芳', DATE_SUB(CURDATE(), INTERVAL 3 DAY), '正常', '07:58', ''),
+('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 3 DAY), '正常', '07:47', ''),
+('20250006','刘洋', DATE_SUB(CURDATE(), INTERVAL 3 DAY), '正常', '07:52', ''),
+('20250001','李雷', DATE_SUB(CURDATE(), INTERVAL 4 DAY), '正常', '07:55', ''),
+('20250002','韩梅梅', DATE_SUB(CURDATE(), INTERVAL 4 DAY), '迟到', '08:10', '睡过头'),
+('20250003','张伟', DATE_SUB(CURDATE(), INTERVAL 4 DAY), '正常', '07:52', ''),
+('20250004','王芳', DATE_SUB(CURDATE(), INTERVAL 4 DAY), '正常', '07:59', ''),
+('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 4 DAY), '正常', '07:48', ''),
+('20250006','刘洋', DATE_SUB(CURDATE(), INTERVAL 4 DAY), '请假', '全天', '病假'),
+('20250001','李雷', DATE_SUB(CURDATE(), INTERVAL 5 DAY), '正常', '07:51', ''),
+('20250002','韩梅梅', DATE_SUB(CURDATE(), INTERVAL 5 DAY), '正常', '07:55', ''),
+('20250003','张伟', DATE_SUB(CURDATE(), INTERVAL 5 DAY), '正常', '07:57', ''),
+('20250004','王芳', DATE_SUB(CURDATE(), INTERVAL 5 DAY), '迟到', '08:06', ''),
+('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 5 DAY), '正常', '07:50', ''),
+('20250006','刘洋', DATE_SUB(CURDATE(), INTERVAL 5 DAY), '正常', '07:54', ''),
+('20250001','李雷', DATE_SUB(CURDATE(), INTERVAL 6 DAY), '正常', '07:56', ''),
+('20250002','韩梅梅', DATE_SUB(CURDATE(), INTERVAL 6 DAY), '正常', '07:53', ''),
+('20250003','张伟', DATE_SUB(CURDATE(), INTERVAL 6 DAY), '正常', '07:49', ''),
+('20250004','王芳', DATE_SUB(CURDATE(), INTERVAL 6 DAY), '正常', '07:58', ''),
+('20250005','赵敏', DATE_SUB(CURDATE(), INTERVAL 6 DAY), '正常', '07:52', ''),
+('20250006','刘洋', DATE_SUB(CURDATE(), INTERVAL 6 DAY), '正常', '07:55', '');

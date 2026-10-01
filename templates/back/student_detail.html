@@ -1,0 +1,44 @@
+{% extends 'back/_base.html' %}
+{% set title = student.student_name ~ ' 的考勤' %}
+{% block content %}
+  <div class="page-head">
+    <h1>{{ student.student_name }} <span class="muted" style="font-size:14px;font-weight:400;">
+      {{ student.student_no }}{% if student.class_name %} · {{ student.class_name }}{% endif %}</span></h1>
+    <form class="actions" method="get">
+      <input type="month" name="month" value="{{ month }}" style="width:160px;" onchange="this.form.submit()">
+      <a class="btn gray" href="{{ url_for('web.attendance_list', keyword=student.student_no) }}">查看全部记录</a>
+    </form>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">本月已登记</div><div class="v">{{ summary.recorded_days }} 天</div></div>
+    {% for s in statuses %}
+      <div class="stat"><div class="k"><span class="tag tag-{{ s }}">{{ s }}</span></div>
+        <div class="v">{{ summary.counts[s] }} 次</div></div>
+    {% endfor %}
+    <div class="stat"><div class="k">个人出勤率</div>
+      <div class="v">{{ (summary.rate | round | int ~ '%') if summary.rate is not none else '--' }}</div></div>
+  </div>
+
+  <div class="card" style="padding:0;">
+    <table>
+      <thead>
+        <tr><th style="width:120px;">日期</th><th style="width:90px;">状态</th><th style="width:100px;">时间</th><th>备注</th><th style="width:90px;">操作</th></tr>
+      </thead>
+      <tbody>
+        {% for r in summary.records %}
+          <tr>
+            <td>{{ r.date }}</td>
+            <td><span class="tag tag-{{ r.status }}">{{ r.status }}</span></td>
+            <td>{{ r.time }}</td>
+            <td class="wrap">{{ r.remark }}</td>
+            <td><a class="btn gray small" href="{{ url_for('web.attendance_edit_page', id=r.id) }}">编辑</a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="empty">{{ month }} 没有考勤记录</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">个人出勤率 =（正常 + 迟到）÷ 本月已登记天数。</p>
+{% endblock %}

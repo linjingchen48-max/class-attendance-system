@@ -11,24 +11,28 @@ html, body { height: 100%; margin: 0; font-family: -apple-system,BlinkMacSystemF
 .timebox { text-align:right; line-height:1.4; font-size: 16px; color: rgba(215,243,255,.85); }
 .timebox .now { font-size: 18px; color:#e9fbff; }
 
-.cards { display:grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 10px; }
+.cards { display:grid; grid-template-columns: repeat(7, 1fr); gap: 14px; margin-top: 10px; }
 .card { position:relative; padding: 16px 16px 14px; border-radius: 10px; background: rgba(9, 26, 70, .55);
  border: 1px solid rgba(76, 196, 255, .25); box-shadow: inset 0 0 18px rgba(76,196,255,.08);
  backdrop-filter: blur(6px);
 }
-.card .label { display:flex; align-items:center; gap:10px; font-size: 18px; color: rgba(231,251,255,.92); }
+.card .label { display:flex; align-items:center; gap:10px; font-size: 17px; white-space: nowrap; color: rgba(231,251,255,.92); }
 .badge { width: 34px; height: 34px; border-radius: 50%;
  background: radial-gradient(circle at 30% 30%, rgba(120,240,255,.8), rgba(22,80,180,.2));
  border: 1px solid rgba(120,240,255,.35);
  box-shadow: 0 0 16px rgba(84,200,255,.2);
  display:flex; align-items:center; justify-content:center;
 }
-.badge i { width: 16px; height: 16px; display:block; border-radius: 3px; background: rgba(215,243,255,.85); opacity:.9; }
-.card .value { margin-top: 12px; font-size: 54px; font-weight: 800; letter-spacing:1px;
+.badge svg { width: 18px; height: 18px; fill: none; stroke: #e9fbff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.card .value { margin-top: 12px; font-size: 50px; font-weight: 800; letter-spacing:1px;
  color:#88eaff; text-shadow: 0 0 16px rgba(88,234,255,.25);
 }
 .card .unit { font-size: 18px; font-weight: 600; opacity: .9; margin-left: 4px; }
-.card .sub { position:absolute; right: 14px; bottom: 12px; font-size: 13px; opacity:.75; }
+.card .sub { position:absolute; right: 14px; bottom: 12px; font-size: 12px; opacity:.7; }
+.card .value.warn { color:#ffd278; text-shadow: 0 0 16px rgba(255,186,56,.25); }
+.card .value.info { color:#a0e1ff; }
+.card .value.danger { color:#ffaabe; text-shadow: 0 0 16px rgba(255,90,120,.25); }
+.card .value.muted { color:#b8c4d6; text-shadow: none; }
 
 .panels { display:grid; grid-template-columns: 1.05fr 1.2fr 1fr; gap: 14px; margin-top: 14px; }
 .panel { border-radius: 10px; background: rgba(9, 26, 70, .45);
@@ -37,18 +41,35 @@ html, body { height: 100%; margin: 0; font-family: -apple-system,BlinkMacSystemF
 }
 .panel h3 { margin: 4px 4px 10px; font-size: 18px; letter-spacing:1px; color: rgba(231,251,255,.92); }
 .chart { height: 360px; }
-.tablewrap { padding: 0 6px 6px; }
+.panel h3 .count { font-size: 14px; font-weight: 400; opacity: .7; margin-left: 6px; }
+/* 异常名单固定高度、超出滚动；长备注自动换行，不再把表格撑出屏幕 */
+.tablewrap { padding: 0 6px 6px; height: 360px; overflow-y: auto; }
+.tablewrap::-webkit-scrollbar { width: 6px; }
+.tablewrap::-webkit-scrollbar-thumb { background: rgba(120,240,255,.2); border-radius: 3px; }
+.table { table-layout: fixed; }
+.table td { word-break: break-all; overflow-wrap: anywhere; }
+.table thead th { position: sticky; top: 0; background: #0a1a45; z-index: 1; }
 .table { width:100%; border-collapse: collapse; font-size: 14px; }
 .table th, .table td { padding: 10px 10px; border-bottom: 1px solid rgba(120,240,255,.12); }
 .table th { color: rgba(180,240,255,.9); font-weight:700; }
-.row-tag { display:inline-block; padding: 4px 10px; border-radius: 999px; font-weight:700; }
+.row-tag { display:inline-block; white-space: nowrap; padding: 4px 10px; border-radius: 999px; font-weight:700; }
 .tag-late { background: rgba(255, 186, 56, .16); color: rgba(255, 210, 120, 1); border: 1px solid rgba(255, 186, 56, .22); }
 .tag-leave { background: rgba(70, 180, 255, .16); color: rgba(160, 225, 255, 1); border: 1px solid rgba(70, 180, 255, .22); }
+.tag-unreg { background: rgba(184,196,214,.12); color: #c8d2e0; border: 1px solid rgba(184,196,214,.25); }
 .tag-absent { background: rgba(255, 90, 120, .16); color: rgba(255, 170, 190, 1); border: 1px solid rgba(255, 90, 120, .22); }
 .footerhint { margin: 10px 2px 0; font-size: 12px; opacity:.7; }
 
 @media (max-width: 1400px) {
-  .cards { grid-template-columns: repeat(3, 1fr); }
+  .cards { grid-template-columns: repeat(4, 1fr); }
+  .tablewrap { height: 320px; }
   .panels { grid-template-columns: 1fr; }
   .chart { height: 320px; }
+}
+
+@media (max-width: 700px) {
+  .screen { padding: 14px 16px; }
+  .header { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .title { font-size: 28px; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .card .value { font-size: 38px; }
 }

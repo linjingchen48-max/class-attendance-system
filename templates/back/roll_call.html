@@ -1,0 +1,142 @@
+{% extends 'back/_base.html' %}
+{% set title = '批量点名' %}
+{% block head %}
+<style>
+  .seg { display: inline-flex; border: 1px solid #cfd4da; border-radius: 6px; overflow: hidden; }
+  .seg label { margin: 0; font-weight: 500; font-size: 13px; color: #555; cursor: pointer; }
+  .seg input { display: none; }
+  .seg span { display: block; padding: 5px 12px; border-left: 1px solid #cfd4da; user-select: none; }
+  .seg label:first-child span { border-left: 0; }
+  .seg input:checked + span { color: #fff; }
+  .seg input[value="正常"]:checked + span { background: var(--ok); }
+  .seg input[value="迟到"]:checked + span { background: var(--late); }
+  .seg input[value="请假"]:checked + span { background: var(--leave); }
+  .seg input[value="旷课"]:checked + span { background: var(--absent); }
+  .rc td input { padding: 6px 8px; }
+  .new-mark { font-size: 11px; color: var(--late); margin-left: 6px; }
+  .bar { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; display: flex; gap: 10px; align-items: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="page-head">
+    <h1>批量点名</h1>
+    <div class="actions">
+      <input type="date" id="date" value="{{ date }}" style="width:170px;">
+    </div>
+  </div>
+
+  <div class="stats" id="summary"></div>
+
+  <div class="card" style="padding:0;">
+    <table class="rc">
+      <thead>
+        <tr>
+          <th style="width:110px;">学号</th>
+          <th style="width:130px;">姓名</th>
+          <th style="width:260px;">状态</th>
+          <th style="width:130px;">时间</th>
+          <th>备注</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="5" class="empty">加载中…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="bar">
+    <button class="btn" id="btnSave">保存全班考勤</button>
+    <button class="btn gray" id="btnAllOk">全部设为正常</button>
+    <span class="muted" id="dirty"></span>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const STATUSES = {{ statuses | list | tojson }};
+  const tbody = document.querySelector('#tbody');
+  const dateInput = document.querySelector('#date');
+  let rows = [], dirty = false, currentDate = dateInput.value;
+
+  function setDirty(v){
+    dirty = v;
+    document.querySelector('#dirty').textContent = v ? '有未保存的修改' : '';
+  }
+
+  function rowHtml(r, i){
+    const st = r.status || '正常';
+    const seg = STATUSES.map(s => `
+      <label><input type="radio" name="st${i}" value="${esc(s)}" ${s === st ? 'checked' : ''}><span>${esc(s)}</span></label>`).join('');
+    return `
+      <tr data-i="${i}">
+        <td>${esc(r.student_no)}</td>
+        <td>${esc(r.student_name)}${r.record_id ? '' : '<span class="new-mark">未登记</span>'}</td>
+        <td><div class="seg">${seg}</div></td>
+        <td><input class="time" maxlength="20" value="${esc(r.time)}" placeholder="08:05 / 全天"></td>
+        <td><input class="remark" maxlength="200" value="${esc(r.remark)}" placeholder="备注"></td>
+      </tr>`;
+  }
+
+  function collect(){
+    return [...tbody.querySelectorAll('tr[data-i]')].map(tr => {
+      const r = rows[tr.dataset.i];
+      return {
+        student_no: r.student_no,
+        status: tr.querySelector('input[type=radio]:checked').value,
+        time: tr.querySelector('.time').value.trim(),
+        remark: tr.querySelector('.remark').value.trim(),
+      };
+    });
+  }
+
+  function renderSummary(){
+    const items = collect();
+    const count = (s) => items.filter(x => x.status === s).length;
+    const attended = count('正常') + count('迟到');
+    const rate = items.length ? Math.round(attended / items.length * 100) : 0;
+    const cards = [['应到', items.length], ['正常', count('正常')], ['迟到', count('迟到')],
+                   ['请假', count('请假')], ['旷课', count('旷课')], ['出勤率', rate + '%']];
+    document.querySelector('#summary').innerHTML =
+      cards.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  }
+
+  async function load(){
+    if(dirty && !confirm('当前有未保存的修改，切换日期会丢失，确定吗？')){
+      dateInput.value = currentDate; return;
+    }
+    if(!dateInput.value){ dateInput.value = currentDate; return; }
+    currentDate = dateInput.value;
+    history.replaceState(null, '', '?date=' + dateInput.value);
+    const res = await fetch('/back/attendance/api/roll-call?date=' + encodeURIComponent(dateInput.value), { cache:'no-store' });
+    const json = await res.json();
+    if(json.code === 401){ location.href = '/back/login'; return; }
+    if(json.code !== 200){ toast(json.msg || '加载失败', false); return; }
+    rows = json.data || [];
+    tbody.innerHTML = rows.length ? rows.map(rowHtml).join('')
+      : `<tr><td colspan="5" class="empty">名册里还没有学生，请先到 <a href="/back/student/list">学生名册</a> 添加</td></tr>`;
+    setDirty(false);
+    renderSummary();
+  }
+
+  tbody.addEventListener('change', () => { setDirty(true); renderSummary(); });
+  tbody.addEventListener('input', () => setDirty(true));
+  dateInput.addEventListener('change', load);
+
+  document.querySelector('#btnAllOk').addEventListener('click', () => {
+    tbody.querySelectorAll('input[type=radio][value="正常"]').forEach(r => r.checked = true);
+    setDirty(true); renderSummary();
+  });
+
+  document.querySelector('#btnSave').addEventListener('click', async () => {
+    const items = collect();
+    if(!items.length) return;
+    const btn = document.querySelector('#btnSave'); btn.disabled = true;
+    const json = await postJSON('/back/attendance/api/roll-call', { date: dateInput.value, items });
+    btn.disabled = false;
+    toast(json.msg || '完成', json.code === 200);
+    if(json.code === 200){ setDirty(false); load(); }
+  });
+
+  window.addEventListener('beforeunload', (e) => { if(dirty){ e.preventDefault(); e.returnValue = ''; } });
+  load();
+</script>
+{% endblock %}

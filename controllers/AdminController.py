@@ -20,6 +20,8 @@ class AdminController:
 
         teacher = TeacherModel.get_by_login(username, password)
         if teacher:
+            session.clear()          # 登录前清空旧 session，防止会话固定
+            session.permanent = True  # 有效期 8 小时（见 app.py）
             session['teacher_id'] = teacher['id']
             session['teacher_name'] = teacher.get('name') or teacher.get('username')
             return jsonify({'code': 200, 'msg': '登录成功', 'redirect': url_for('web.attendance_list')})
@@ -27,6 +29,5 @@ class AdminController:
 
     @staticmethod
     def logout():
-        session.pop('teacher_id', None)
-        session.pop('teacher_name', None)
+        session.clear()
         return redirect(url_for('web.admin_login_page'))

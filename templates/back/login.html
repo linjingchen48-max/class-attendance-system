@@ -2,31 +2,42 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>班主任登录</title>
+  <title>班主任登录 - 班级考勤管理</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/reset.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='back/admin.css') }}">
   <style>
-    .box { width: 380px; margin: 90px auto; padding: 26px; background:#fff; border-radius: 6px; box-shadow: 0 10px 35px rgba(0,0,0,.12); }
-    h1 { font-size: 20px; margin: 0 0 14px; }
-    input{ width:100%; padding: 10px; margin: 8px 0; }
-    button{ width:100%; padding: 10px; background:#2c8f2c; color:#fff; border:0; border-radius:4px; cursor:pointer; }
-    .msg{ margin-top: 10px; color:#c0392b; min-height: 18px; }
-    .hint{ font-size:12px; color:#666; margin-top:8px; }
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh;
+      background: linear-gradient(135deg, #1f2a37 0%, #2c3e50 100%); padding: 16px; }
+    .box { width: 100%; max-width: 380px; background: #fff; border-radius: 10px; padding: 30px 28px 26px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+    .box h1 { font-size: 22px; margin: 0 0 4px; }
+    .box .sub { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+    .box .form-row { margin-bottom: 14px; }
+    .box button { width: 100%; justify-content: center; padding: 10px; font-size: 15px; margin-top: 6px; }
+    .msg { margin-top: 12px; color: var(--danger); min-height: 20px; font-size: 13px; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>班主任后台登录</h1>
-    <input id="username" placeholder="账号" autocomplete="username" />
-    <input id="password" placeholder="密码" type="password" autocomplete="current-password" />
-    <button id="btnLogin">登录</button>
+  <form class="box" id="form" novalidate>
+    <h1>班级考勤管理</h1>
+    <p class="sub">班主任后台登录</p>
+    <div class="form-row">
+      <label for="username">账号</label>
+      <input id="username" autocomplete="username" autofocus>
+    </div>
+    <div class="form-row">
+      <label for="password">密码</label>
+      <input id="password" type="password" autocomplete="current-password">
+    </div>
+    <button class="btn" id="btnLogin" type="submit">登录</button>
     <div class="msg" id="msg"></div>
-</div>
+  </form>
 
   <script>
     const $ = (s)=>document.querySelector(s);
-    $('#btnLogin').addEventListener('click', async ()=>{
+    // 用 form 的 submit 事件：点按钮和按回车都能登录
+    $('#form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
       $('#msg').textContent = '';
       const username = $('#username').value.trim();
       const password = $('#password').value;
@@ -34,17 +45,23 @@
         $('#msg').textContent = '请输入账号和密码';
         return;
       }
-      const res = await fetch('/back/login', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({username, password})
-      });
-      const json = await res.json();
-      if(json.code === 200){
-        location.href = json.redirect || '/back/attendance/list';
-      }else{
+      $('#btnLogin').disabled = true;
+      try{
+        const res = await fetch('/back/login', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({username, password})
+        });
+        const json = await res.json();
+        if(json.code === 200){
+          location.href = json.redirect || '/back/attendance/list';
+          return;
+        }
         $('#msg').textContent = json.msg || '登录失败';
+      }catch(err){
+        $('#msg').textContent = '网络错误，请稍后重试';
       }
+      $('#btnLogin').disabled = false;
     });
   </script>
 </body>

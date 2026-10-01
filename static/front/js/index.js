@@ -57,9 +57,19 @@
     $('#cLate').textContent = late;
     $('#cLeave').textContent = leave;
     $('#cAbsent').textContent = absent;
+    $('#cUnreg').textContent = ta.unregistered ?? 0;
+
+    // 标题里的班级名取自学生名册
+    if (data.class_name) {
+      $('#className').textContent = data.class_name;
+      document.title = data.class_name + '考勤可视化大屏';
+    }
 
     $('#lastUpdate').textContent = new Date().toLocaleTimeString();
   }
+
+  // 每种状态固定颜色（原来用 ECharts 默认配色，"正常"反而是红色，容易误读）
+  const COLORS = { '正常':'#3ad29f', '迟到':'#ffba38', '请假':'#46b4ff', '旷课':'#ff5a78', '未登记':'#6b7a93' };
 
   function last7Labels(){
     const labels = [];
@@ -78,6 +88,8 @@
     const absent = ta.absent ?? 0;
     const late = ta.late ?? 0;
     const leave = ta.leave ?? 0;
+    const unreg = ta.unregistered ?? 0;
+    const rate = data.today_rate ?? calcRate(present + late, total);
 
     const chart = state.pie || echarts.init($('#pieChart'));
     state.pie = chart;
@@ -87,10 +99,17 @@
       { name:'迟到', value: late },
       { name:'请假', value: leave },
       { name:'旷课', value: absent },
-    ];
+      { name:'未登记', value: unreg },
+    ].map(d => ({
+      ...d,
+      itemStyle: { color: COLORS[d.name] },
+      // 人数为 0 的扇区不画标签和引线
+      label: { show: d.value > 0 },
+      labelLine: { show: d.value > 0 },
+    }));
 
     chart.setOption({
-      tooltip: { trigger: 'item' },
+      tooltip: { trigger: 'item', formatter: (p) => `${p.name}：${p.value} 人（${p.percent}%）` },
       legend: { top: 10, left: 10, textStyle: { color: 'rgba(215,243,255,.85)' } },
       series: [{
         name: '班级考勤构成',
@@ -99,11 +118,13 @@
         center: ['50%','58%'],
         avoidLabelOverlap: true,
         label: {
-          formatter: (p) => `${p.name}\n${p.percent}%`,
+          // 人数为 0 的扇区不显示标签，避免 0% 标签挤在一起
+          formatter: (p) => p.value ? `${p.name}\n${p.value}人` : '',
           color: 'rgba(215,243,255,.9)',
           fontWeight: 700
         },
         labelLine: { length: 10, length2: 12 },
+        minShowLabelAngle: 1,
         data: seriesData
       }],
       graphic: [{
@@ -111,7 +132,8 @@
         left: 'center',
         top: '52%',
         style: {
-          text: `正常\n${calcRate(present,total)}%`,
+          // 中心显示与顶部卡片相同口径的出勤率
+          text: `出勤率\n${Math.round(rate)}%`,
           textAlign: 'center',
           fill: 'rgba(140,255,210,.95)',
           fontSize: 18,
@@ -126,7 +148,8 @@
     state.line = chart;
 
     const y = (data.weekly_rate || []).slice(-7);
-    const x = last7Labels();
+    // 日期标签用后端给的，和数据同一个"今天"，避免浏览器与服务器日期不一致时错位
+    const x = data.weekly_labels || last7Labels();
 
     chart.setOption({
       grid: { left: 44, right: 18, top: 30, bottom: 30 },
@@ -159,7 +182,12 @@
         connectNulls: false,    // 无记录的日子断开，不连成假趋势
         symbol: 'circle',
         symbolSize: 8,
-        areaStyle: { opacity: 0.18 },
+        itemStyle: { color: '#58eaff' },
+        lineStyle: { color: '#58eaff', width: 2 },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: 'rgba(88,234,255,.35)' }, { offset: 1, color: 'rgba(88,234,255,0)' }]) },
+        label: { show: true, position: 'top', color: 'rgba(215,243,255,.85)',
+                 formatter: (p) => p.value == null ? '' : Math.round(p.value) + '%' },
         data: y
       }]
     }, true);
@@ -169,16 +197,17 @@
     const list = Array.isArray(data.abnormal_list) ? data.abnormal_list : [];
     const tbody = $('#abnormalBody');
     tbody.innerHTML = '';
+    $('#abnCount').textContent = list.length ? `（${list.length} 人）` : '';
     if(list.length === 0){
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="4" style="text-align:center;opacity:.75;">暂无异常记录</td>`;
+      tr.innerHTML = `<td colspan="4" style="text-align:center;opacity:.75;">今天全员正常 🎉</td>`;
       tbody.appendChild(tr);
       return;
     }
     list.forEach((r) => {
       const tr = document.createElement('tr');
       const t = r.type || r.status || '';
-      const tagCls = t === '迟到' ? 'tag-late' : (t === '请假' ? 'tag-leave' : 'tag-absent');
+      const tagCls = { '迟到':'tag-late', '请假':'tag-leave', '未登记':'tag-unreg' }[t] || 'tag-absent';
       tr.innerHTML = `
         <td>${esc(r.name || r.student_name)}</td>
         <td><span class="row-tag ${tagCls}">${esc(t)}</span></td>

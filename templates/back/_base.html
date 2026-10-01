@@ -2,49 +2,71 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>{{ title or '后台管理' }}</title>
+  <title>{{ title or '后台管理' }} - 班级考勤管理</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/reset.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='back/resources/css/style.css') }}">
-  <style>
-    .container { max-width: 1100px; margin: 26px auto; padding: 0 16px; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; }
-    .topbar a { margin-left: 10px; }
-    .btn { display:inline-block; padding: 8px 12px; background:#2c8f2c; color:#fff; border-radius:4px; text-decoration:none; }
-    .btn.gray { background:#5a5a5a; }
-    .btn.red { background:#c0392b; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { padding: 10px; border-bottom: 1px solid #eee; }
-    .muted { color:#888; }
-    .form-row { margin: 10px 0; }
-    input, select, textarea { width: 100%; padding: 8px; }
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='back/admin.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
-  <div class="container">
-    <div class="topbar">
-      <div>
-        <strong>{{ title or '后台管理' }}</strong>
-        <span class="muted" style="margin-left:10px;">当前用户：{{ session.get('teacher_name','-') }}</span>
-      </div>
-      <div>
-        <a class="btn gray" href="/front/" target="_blank">打开前台大屏</a>
-<a class="btn red" href="/back/logout">退出</a>
-      </div>
+{% set ep = request.endpoint or '' %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">班级考勤管理<small>班主任后台</small></div>
+    <ul class="nav">
+      <li><a href="{{ url_for('web.attendance_list') }}" class="{{ 'active' if ep in ('web.attendance_list','web.attendance_edit_page') }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>考勤记录</a></li>
+      <li><a href="{{ url_for('web.roll_call') }}" class="{{ 'active' if ep == 'web.roll_call' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>批量点名</a></li>
+      <li><a href="{{ url_for('web.attendance_add_page') }}" class="{{ 'active' if ep == 'web.attendance_add_page' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>新增考勤</a></li>
+      <li><a href="{{ url_for('web.student_list') }}" class="{{ 'active' if ep in ('web.student_list','web.student_detail') }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>学生名册</a></li>
+      <li><a href="{{ url_for('web.home_index') }}" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 13l3-3 2 2 5-5"/></svg>前台大屏 ↗</a></li>
+    </ul>
+    <div class="side-foot">
+      {{ session.get('teacher_name','-') }}<br>
+      <a href="{{ url_for('web.admin_logout') }}">退出登录</a>
     </div>
+  </aside>
+
+  <main class="main">
     {% block content %}{% endblock %}
-  </div>
-  <script>
-    async function postJSON(url, data){
-      const res = await fetch(url, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-      });
-      return await res.json();
-    }
-  </script>
-  {% block scripts %}{% endblock %}
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // 所有来自数据库的内容先转义再拼进 HTML，防止备注、姓名里藏 <script> 等代码（XSS）
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    })[c]);
+  }
+  async function postJSON(url, data){
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data || {})
+    });
+    return await res.json();
+  }
+  // 页面顶部的提示条，替代 alert 弹窗
+  let toastTimer = null;
+  function toast(msg, ok = true){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast' + (ok ? '' : ' err');
+    el.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.display = 'none'; }, ok ? 2200 : 4500);
+  }
+  function localToday(){
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+  }
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

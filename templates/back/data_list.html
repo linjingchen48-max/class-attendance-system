@@ -1,80 +1,142 @@
 {% extends 'back/_base.html' %}
-{% set title = '考勤记录列表' %}
+{% set title = '考勤记录' %}
 {% block content %}
-  <div style="display:flex; justify-content:space-between; align-items:center; margin: 10px 0 14px;">
-    <div class="muted">可对考勤记录进行新增、编辑与删除。</div>
-    <a class="btn" href="/back/attendance/add">新增考勤</a>
+  <div class="page-head">
+    <h1>考勤记录</h1>
+    <div class="actions">
+      <a class="btn gray" id="btnExport" href="{{ url_for('web.attendance_export') }}">导出 Excel</a>
+      <a class="btn gray" href="{{ url_for('web.roll_call') }}">批量点名</a>
+      <a class="btn" href="{{ url_for('web.attendance_add_page') }}">+ 新增考勤</a>
+    </div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th style="width:70px;">ID</th>
-        <th style="width:120px;">学号</th>
-        <th style="width:120px;">姓名</th>
-        <th style="width:140px;">日期</th>
-        <th style="width:120px;">状态</th>
-        <th>备注</th>
-        <th style="width:180px;">操作</th>
-      </tr>
-    </thead>
-    <tbody id="tbody">
-      <tr><td colspan="7" class="muted">加载中…</td></tr>
-    </tbody>
-  </table>
+  <div class="card">
+    <form class="filters" id="filters">
+      <div class="f"><label>开始日期</label><input type="date" name="start"></div>
+      <div class="f"><label>结束日期</label><input type="date" name="end"></div>
+      <div class="f">
+        <label>状态</label>
+        <select name="status">
+          <option value="">全部</option>
+          {% for s in statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="f wide"><label>姓名 / 学号</label><input name="keyword" maxlength="50" placeholder="输入关键字"></div>
+      <button class="btn" type="submit">查询</button>
+      <button class="btn gray" type="button" id="btnToday">只看今天</button>
+      <button class="btn gray" type="reset" id="btnReset">重置</button>
+    </form>
+  </div>
+
+  <div class="card" style="padding:0;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:110px;">日期</th>
+          <th style="width:110px;">学号</th>
+          <th style="width:100px;">姓名</th>
+          <th style="width:80px;">状态</th>
+          <th style="width:90px;">时间</th>
+          <th>备注</th>
+          <th style="width:130px;">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" class="empty">加载中…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <div class="muted" id="pageInfo"></div>
+    <div class="pages">
+      <button class="btn gray small" id="prev">上一页</button>
+      <span id="pageNo" class="muted"></span>
+      <button class="btn gray small" id="next">下一页</button>
+    </div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
   const tbody = document.querySelector('#tbody');
+  const form = document.querySelector('#filters');
+  const PAGE_SIZE = 20;
+  let page = 1, totalPages = 1;
 
-  // 所有来自数据库的内容先转义再拼进 HTML，防止备注、姓名里藏 <script> 等代码（XSS）
-  function esc(v){
-    return String(v ?? '').replace(/[&<>"']/g, (c) => ({
-      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-    })[c]);
+  // 筛选条件同步到地址栏，刷新页面或分享链接时条件不丢
+  function readFilters(){
+    const fd = new FormData(form);
+    const q = new URLSearchParams();
+    for (const [k, v] of fd.entries()) if (v) q.set(k, v);
+    return q;
+  }
+  function applyFromUrl(){
+    const q = new URLSearchParams(location.search);
+    for (const el of form.elements) if (el.name && q.has(el.name)) el.value = q.get(el.name);
+    page = Math.max(parseInt(q.get('page') || '1', 10) || 1, 1);
   }
 
   function rowHtml(r){
     const id = Number(r.id);
+    const detail = '/back/student/' + encodeURIComponent(r.student_no);
     return `
       <tr>
-        <td>${id}</td>
-        <td>${esc(r.student_no)}</td>
-        <td>${esc(r.student_name)}</td>
         <td>${esc(r.date)}</td>
-        <td>${esc(r.status)}</td>
-        <td>${esc(r.remark)}</td>
+        <td>${esc(r.student_no)}</td>
+        <td><a href="${detail}" title="查看个人考勤">${esc(r.student_name)}</a></td>
+        <td><span class="tag tag-${esc(r.status)}">${esc(r.status)}</span></td>
+        <td>${esc(r.time)}</td>
+        <td class="wrap">${esc(r.remark)}</td>
         <td>
-          <a class="btn gray" href="/back/attendance/edit/${id}">编辑</a>
-          <a class="btn red" href="javascript:void(0)" onclick="del(${id})">删除</a>
+          <a class="btn gray small" href="/back/attendance/edit/${id}">编辑</a>
+          <button class="btn red small" onclick="del(${id})">删除</button>
         </td>
       </tr>`;
   }
 
   async function load(){
-    const res = await fetch('/back/attendance/api/list', { cache:'no-store' });
+    const q = readFilters();
+    q.set('page', page); q.set('page_size', PAGE_SIZE);
+    history.replaceState(null, '', '?' + q.toString());
+    // 导出按钮使用与列表相同的筛选条件
+    const eq = readFilters();
+    document.querySelector('#btnExport').href = '{{ url_for("web.attendance_export") }}' + (eq.toString() ? '?' + eq : '');
+
+    const res = await fetch('/back/attendance/api/list?' + q.toString(), { cache:'no-store' });
     const json = await res.json();
+    if(json.code === 401){ location.href = '/back/login'; return; }
     if(json.code !== 200){
-      tbody.innerHTML = `<tr><td colspan="7" class="muted">加载失败：${esc(json.msg || '未知错误')}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">加载失败：${esc(json.msg || '未知错误')}</td></tr>`;
       return;
     }
     const list = json.data || [];
-    if(list.length === 0){
-      tbody.innerHTML = `<tr><td colspan="7" class="muted">暂无数据</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = list.map(rowHtml).join('');
+    totalPages = Math.max(Math.ceil(json.total / PAGE_SIZE), 1);
+    if(page > totalPages && json.total > 0){ page = totalPages; return load(); }
+    tbody.innerHTML = list.length ? list.map(rowHtml).join('')
+      : `<tr><td colspan="7" class="empty">没有符合条件的记录</td></tr>`;
+    document.querySelector('#pageInfo').textContent = `共 ${json.total} 条`;
+    document.querySelector('#pageNo').textContent = `${page} / ${totalPages}`;
+    document.querySelector('#prev').disabled = page <= 1;
+    document.querySelector('#next').disabled = page >= totalPages;
   }
 
   async function del(id){
     if(!confirm('确定删除这条记录？')) return;
-    const res = await fetch('/back/attendance/api/delete/' + id, { method:'POST' });
-    const json = await res.json();
-    alert(json.msg || '完成');
+    const json = await postJSON('/back/attendance/api/delete/' + id);
+    toast(json.msg || '完成', json.code === 200);
     load();
   }
 
+  form.addEventListener('submit', (e) => { e.preventDefault(); page = 1; load(); });
+  document.querySelector('#btnReset').addEventListener('click', () => { setTimeout(() => { page = 1; load(); }); });
+  document.querySelector('#btnToday').addEventListener('click', () => {
+    form.start.value = form.end.value = localToday(); page = 1; load();
+  });
+  document.querySelector('#prev').addEventListener('click', () => { if(page > 1){ page--; load(); } });
+  document.querySelector('#next').addEventListener('click', () => { if(page < totalPages){ page++; load(); } });
+
+  applyFromUrl();
   load();
 </script>
 {% endblock %}

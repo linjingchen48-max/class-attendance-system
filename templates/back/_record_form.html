@@ -1,0 +1,43 @@
+{# 新增 / 编辑考勤共用的表单。学生从名册里选，姓名由后端按学号从名册带出。 #}
+<form id="form" class="card" novalidate>
+  <div class="grid2">
+    <div class="form-row">
+      <label for="student_no">学生</label>
+      <select name="student_no" id="student_no" required>
+        <option value="">请选择学生</option>
+        {% for s in students %}
+          <option value="{{ s.student_no }}" {% if record and record.student_no == s.student_no %}selected{% endif %}>
+            {{ s.student_no }}　{{ s.student_name }}{% if s.class_name %}（{{ s.class_name }}）{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      {% if not students %}
+        <div class="hint">名册里还没有学生，请先到 <a href="{{ url_for('web.student_list') }}">学生名册</a> 添加。</div>
+      {% endif %}
+    </div>
+    <div class="form-row">
+      <label for="date">日期</label>
+      <input type="date" name="date" id="date" required value="{{ record.date if record else today }}">
+    </div>
+    <div class="form-row">
+      <label for="status">状态</label>
+      <select name="status" id="status">
+        {% for s in statuses %}
+          <option value="{{ s }}" {% if record and record.status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="time">时间（可选）</label>
+      <input name="time" id="time" maxlength="20" placeholder="如 08:05 / 全天" value="{{ record.time if record else '' }}">
+    </div>
+  </div>
+  <div class="form-row" style="margin-top:14px;">
+    <label for="remark">备注（可选）</label>
+    <input name="remark" id="remark" maxlength="200" placeholder="如 堵车 / 病假 / 未说明" value="{{ record.remark if record else '' }}">
+  </div>
+  <div class="form-actions">
+    <button class="btn" type="submit" id="btnSave">保存</button>
+    <a class="btn gray" href="{{ url_for('web.attendance_list') }}">返回列表</a>
+  </div>
+</form>

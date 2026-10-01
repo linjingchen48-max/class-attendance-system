@@ -1,68 +1,28 @@
 {% extends 'back/_base.html' %}
-{% set title = '编辑考勤记录' %}
+{% set title = '编辑考勤' %}
 {% block content %}
-  <form id="form" style="margin-top:12px;">
-    <div class="grid2">
-      <div class="form-row">
-        <label>学号</label>
-        <input name="student_no" required maxlength="20" pattern="[A-Za-z0-9]+" title="字母或数字" value="{{ record.student_no }}">
-      </div>
-      <div class="form-row">
-        <label>姓名</label>
-        <input name="student_name" required maxlength="50" value="{{ record.student_name }}">
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div class="form-row">
-        <label>日期</label>
-        <input type="date" name="date" required value="{{ record.date }}">
-      </div>
-      <div class="form-row">
-        <label>状态</label>
-        <select name="status">
-          {% for s in ['正常','迟到','请假','旷课'] %}
-            <option value="{{ s }}" {% if record.status==s %}selected{% endif %}>{{ s }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div class="form-row">
-        <label>时间（可选）</label>
-        <input name="time" maxlength="20" value="{{ record.time or '' }}">
-      </div>
-      <div class="form-row">
-        <label>备注（可选）</label>
-        <input name="remark" maxlength="200" value="{{ record.remark or '' }}">
-      </div>
-    </div>
-
-    <div style="margin-top: 14px;">
-      <button class="btn" type="submit">保存修改</button>
-      <a class="btn gray" href="/back/attendance/list">返回列表</a>
-    </div>
-  </form>
+  <div class="page-head"><h1>编辑考勤</h1></div>
+  {% include 'back/_record_form.html' %}
 {% endblock %}
 
 {% block scripts %}
 <script>
   const form = document.querySelector('#form');
-  const id = parseInt(location.pathname.split('/').pop(), 10);
-
+  const id = {{ record.id | int }};
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const fd = new FormData(form);
-    const payload = Object.fromEntries(fd.entries());
-    const res = await fetch('/back/attendance/api/update/' + id, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const json = await res.json();
-    alert(json.msg || '完成');
-    if(json.code === 200) location.href = '/back/attendance/list';
+    if(!form.student_no.value){ toast('请选择学生', false); return; }
+    const btn = document.querySelector('#btnSave'); btn.disabled = true;
+    const json = await postJSON('/back/attendance/api/update/' + id, Object.fromEntries(new FormData(form).entries()));
+    btn.disabled = false;
+    if(json.code === 200){
+      toast(json.msg || '修改成功');
+      // 回到来时的列表页（保留筛选和页码）
+      const back = document.referrer.includes('/back/') ? document.referrer : '/back/attendance/list';
+      setTimeout(() => { location.href = back; }, 700);
+      return;
+    }
+    toast(json.msg || '修改失败', false);
   });
 </script>
 {% endblock %}
