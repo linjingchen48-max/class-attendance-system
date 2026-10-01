@@ -21,6 +21,16 @@ class AttendanceModel:
         return fetch_one(sql, (record_id,))
 
     @staticmethod
+    def exists_on_date(student_no: str, date_str: str, exclude_id: int = None) -> bool:
+        """该学生当天是否已有考勤记录（编辑时排除自身 exclude_id）。"""
+        sql = "SELECT id FROM attendance_record WHERE student_no=%s AND `date`=%s"
+        params = [student_no, date_str]
+        if exclude_id is not None:
+            sql += " AND id<>%s"
+            params.append(exclude_id)
+        return fetch_one(sql + " LIMIT 1", tuple(params)) is not None
+
+    @staticmethod
     def add(student_no: str, student_name: str, date_str: str, status: str, time: str = "", remark: str = "") -> int:
         sql = """INSERT INTO attendance_record(student_no, student_name, `date`, status, time, remark)
                  VALUES(%s,%s,%s,%s,%s,%s)"""

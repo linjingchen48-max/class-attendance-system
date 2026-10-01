@@ -28,18 +28,26 @@
 <script>
   const tbody = document.querySelector('#tbody');
 
+  // 所有来自数据库的内容先转义再拼进 HTML，防止备注、姓名里藏 <script> 等代码（XSS）
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    })[c]);
+  }
+
   function rowHtml(r){
+    const id = Number(r.id);
     return `
       <tr>
-        <td>${r.id ?? ''}</td>
-        <td>${r.student_no ?? ''}</td>
-        <td>${r.student_name ?? ''}</td>
-        <td>${r.date ?? ''}</td>
-        <td>${r.status ?? ''}</td>
-        <td>${r.remark ?? ''}</td>
+        <td>${id}</td>
+        <td>${esc(r.student_no)}</td>
+        <td>${esc(r.student_name)}</td>
+        <td>${esc(r.date)}</td>
+        <td>${esc(r.status)}</td>
+        <td>${esc(r.remark)}</td>
         <td>
-          <a class="btn gray" href="/back/attendance/edit/${r.id}">编辑</a>
-          <a class="btn red" href="javascript:void(0)" onclick="del(${r.id})">删除</a>
+          <a class="btn gray" href="/back/attendance/edit/${id}">编辑</a>
+          <a class="btn red" href="javascript:void(0)" onclick="del(${id})">删除</a>
         </td>
       </tr>`;
   }
@@ -48,7 +56,7 @@
     const res = await fetch('/back/attendance/api/list', { cache:'no-store' });
     const json = await res.json();
     if(json.code !== 200){
-      tbody.innerHTML = `<tr><td colspan="7" class="muted">加载失败：${json.msg || '未知错误'}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="muted">加载失败：${esc(json.msg || '未知错误')}</td></tr>`;
       return;
     }
     const list = json.data || [];

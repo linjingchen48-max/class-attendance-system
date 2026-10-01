@@ -5,11 +5,11 @@
     <div class="grid2">
       <div class="form-row">
         <label>学号</label>
-        <input name="student_no" required>
+        <input name="student_no" required maxlength="20" pattern="[A-Za-z0-9]+" title="字母或数字">
       </div>
       <div class="form-row">
         <label>姓名</label>
-        <input name="student_name" required>
+        <input name="student_name" required maxlength="50">
       </div>
     </div>
 
@@ -32,11 +32,11 @@
     <div class="grid2">
       <div class="form-row">
         <label>时间（可选）</label>
-        <input name="time" placeholder="08:05 / 全天">
+        <input name="time" maxlength="20" placeholder="08:05 / 全天">
       </div>
       <div class="form-row">
         <label>备注（可选）</label>
-        <input name="remark" placeholder="堵车 / 病假 / 未说明">
+        <input name="remark" maxlength="200" placeholder="堵车 / 病假 / 未说明">
       </div>
     </div>
 

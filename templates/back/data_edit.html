@@ -5,11 +5,11 @@
     <div class="grid2">
       <div class="form-row">
         <label>学号</label>
-        <input name="student_no" required value="{{ record.student_no }}">
+        <input name="student_no" required maxlength="20" pattern="[A-Za-z0-9]+" title="字母或数字" value="{{ record.student_no }}">
       </div>
       <div class="form-row">
         <label>姓名</label>
-        <input name="student_name" required value="{{ record.student_name }}">
+        <input name="student_name" required maxlength="50" value="{{ record.student_name }}">
       </div>
     </div>
 
@@ -31,11 +31,11 @@
     <div class="grid2">
       <div class="form-row">
         <label>时间（可选）</label>
-        <input name="time" value="{{ record.time or '' }}">
+        <input name="time" maxlength="20" value="{{ record.time or '' }}">
       </div>
       <div class="form-row">
         <label>备注（可选）</label>
-        <input name="remark" value="{{ record.remark or '' }}">
+        <input name="remark" maxlength="200" value="{{ record.remark or '' }}">
       </div>
     </div>
 

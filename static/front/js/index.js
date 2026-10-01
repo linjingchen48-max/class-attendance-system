@@ -9,6 +9,13 @@
     line: null,
   };
 
+  // 所有来自数据库的内容先转义再拼进 HTML，防止备注、姓名里藏 <script> 等代码（XSS）
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    })[c]);
+  }
+
   function pad(n){ return String(n).padStart(2,'0'); }
   function formatNow(){
     const d = new Date();
@@ -173,10 +180,10 @@
       const t = r.type || r.status || '';
       const tagCls = t === '迟到' ? 'tag-late' : (t === '请假' ? 'tag-leave' : 'tag-absent');
       tr.innerHTML = `
-        <td>${r.name || r.student_name || ''}</td>
-        <td><span class="row-tag ${tagCls}">${t}</span></td>
-        <td>${r.time || '--'}</td>
-        <td>${r.remark || ''}</td>
+        <td>${esc(r.name || r.student_name)}</td>
+        <td><span class="row-tag ${tagCls}">${esc(t)}</span></td>
+        <td>${esc(r.time || '--')}</td>
+        <td>${esc(r.remark)}</td>
       `;
       tbody.appendChild(tr);
     });

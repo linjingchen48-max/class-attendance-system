@@ -29,9 +29,10 @@ CREATE TABLE IF NOT EXISTS attendance_record (
   remark VARCHAR(200) DEFAULT '',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  -- 同一学生同一天只能有一条考勤记录，防止重复录入导致出勤率超过 100%
+  UNIQUE KEY uk_student_date (student_no, `date`),
   INDEX idx_date (`date`),
-  INDEX idx_status (status),
-  INDEX idx_student_no (student_no)
+  INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Demo data
@@ -47,7 +48,7 @@ INSERT IGNORE INTO student(student_no, student_name, class_name) VALUES
 ('20250005','赵敏','一(1)班');
 
 -- Last 7 days demo attendance (partial)
-INSERT INTO attendance_record(student_no, student_name, `date`, status, time, remark) VALUES
+INSERT IGNORE INTO attendance_record(student_no, student_name, `date`, status, time, remark) VALUES
 ('20250001','李雷', CURDATE(), '迟到', '08:05', '堵车'),
 ('20250002','韩梅梅', CURDATE(), '请假', '全天', '病假'),
 ('20250003','张伟', CURDATE(), '正常', '07:55', ''),
